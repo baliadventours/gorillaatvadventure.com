@@ -1,0 +1,331 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Primitives ---
+    function isSignedIn() { return request.auth != null; }
+    function isEmailVerified() { return request.auth != null && request.auth.token.email_verified == true; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    function isAdmin() {
+      return isSignedIn() && (
+        (request.auth.token.email != null && 
+         (request.auth.token.email.lower() == 'baliadventours@gmail.com' || 
+          request.auth.token.email.lower() == 'admin@tripbone.com' ||
+          request.auth.token.email.lower() == 'kuotabox@gmail.com')) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function isSupplier() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'supplier'
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- REVIEWS (Unified for collectionGroup and individual access) ---
+    match /{path=**}/reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isAdmin() || (
+                      isSignedIn() && isEmailVerified() && 
+                      incoming().userId == request.auth.uid &&
+                      incoming().status == 'pending' &&
+                      isValidReview(incoming())
+                    );
+      allow update: if isAdmin();
+      allow delete: if isAdmin() || isOwner(existing().userId);
+
+      function isValidReview(review) {
+        return review.rating is number && review.rating >= 1 && review.rating <= 5 &&
+               review.comment is string && review.comment.size() <= 1000 &&
+               review.tourId is string && review.tourId.size() <= 128;
+      }
+    }
+
+    // --- Settings ---
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- Popups ---
+    match /popups/{popupId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- Tours ---
+    match /tours/{tourId} {
+      allow get: if isValidId(tourId);
+      allow list: if true;
+      allow create: if (isAdmin() || (
+        isSupplier() && 
+        incoming().supplierId == request.auth.uid &&
+        incoming().status == 'pending'
+      )) && isValidTour(incoming()) && incoming().createdAt == request.time;
+      allow update: if (isAdmin() || (
+        isSupplier() && 
+        existing().supplierId == request.auth.uid &&
+        incoming().supplierId == existing().supplierId &&
+        (
+          // Allow updates to content without changing status
+          (!incoming().diff(existing()).affectedKeys().hasAny(['status', 'supplierId'])) ||
+          // Allow re-submitting for review if rejected or changing status to pending
+          (incoming().status == 'pending')
+        )
+      )) && isValidTour(incoming()) && (isAdmin() || (isSignedIn() && request.auth.token.email_verified == true));
+      allow delete: if isAdmin() || (isSupplier() && existing().supplierId == request.auth.uid);
+
+      function isValidTour(tour) {
+        return tour.title is string && tour.title.size() > 0 && tour.title.size() <= 200 &&
+               tour.location is string && tour.location.size() <= 200 &&
+               tour.regularPrice is number && tour.regularPrice >= 0 &&
+               tour.updatedAt == request.time;
+      }
+    }
+
+    match /tourLabels/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- Bookings ---
+    match /bookings/{bookingId} {
+      // allow get: If they have the random ID, we allow read for confirmation/success pages.
+      allow get: if isValidId(bookingId); 
+      allow list: if 
+        isAdmin() || 
+        (resource.data.customerData.email != null) ||
+        (isSignedIn() && (
+          resource.data.userId == request.auth.uid || 
+          resource.data.supplierId == request.auth.uid
+        ));
+      
+      allow create: if true; // Temporarily open for debugging
+      
+      allow update: if (isAdmin() || (
+        (isSignedIn() || existing().userId == 'anonymous') && (
+          // Action: Supplier update (Status, Notes, Guide Assignment, Logs)
+          (isSignedIn() && existing().supplierId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'internalNotes', 'assignedGuideId', 'assignedGuideName', 'assignedGuideWhatsapp', 'logs', 'updatedAt'])) ||
+          
+          // Action: Customer update
+          ((isOwner(existing().userId) || existing().userId == 'anonymous') && (
+            // Action: Cancel
+            (incoming().status == "cancelled" && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+            // Action: Propose Update
+            (
+              (incoming().status == "review_required" || (existing().status == "review_required" && incoming().status == existing().status) || (existing().status == 'pending' && incoming().status == 'confirmed')) &&
+              isValidBooking(incoming()) &&
+              !incoming().diff(existing()).affectedKeys().hasAny(['userId', 'tourId', 'tourTitle', 'createdAt', 'assignedGuideId', 'assignedGuideName', 'internalNotes', 'logs', 'supplierId'])
+            )
+          ))
+        )
+      ));
+      
+      allow delete: if isAdmin();
+
+      function isValidBooking(booking) {
+        return booking.tourId is string && booking.tourId.size() <= 128 &&
+               booking.date is string && booking.date.size() <= 64 &&
+               booking.participants.adults is number && booking.participants.adults >= 0 &&
+               booking.customerData.fullName is string && booking.customerData.fullName.size() > 0 && 
+               booking.customerData.fullName.size() <= 128 &&
+               booking.customerData.email is string && booking.customerData.email.size() <= 256 &&
+               booking.updatedAt == request.time;
+      }
+    }
+
+    // --- Users ---
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isAdmin() || isOwner(userId) || 
+                   (resource != null && (resource.data.role == 'supplier' || resource.data.role == 'agent')));
+      
+      // Allow searching for own profile by email (essential for merging partners on signup)
+      allow list: if isSignedIn() && (isAdmin() || (resource.data.email == request.auth.token.email));
+      
+      allow write: if isAdmin();
+      
+      // Regular signup creation
+      allow create: if isOwner(userId) && incoming().role == 'customer' && incoming().createdAt == request.time;
+      
+      // Identity maintenance
+      allow update: if isOwner(userId) && 
+                      incoming().createdAt == existing().createdAt &&
+                      !incoming().diff(existing()).affectedKeys().hasAny(['role', 'email']);
+      
+      // Allow users to delete their own account or clean up merged temporary profiles matching their email
+      allow delete: if isAdmin() || (isSignedIn() && existing().email == request.auth.token.email);
+    }
+
+    // --- Saved Itineraries ---
+    match /saved_itineraries/{id} {
+      allow read, delete: if isOwner(existing().userId);
+      allow create: if isSignedIn() && isOwner(incoming().userId) && isValidSavedItinerary(incoming());
+      
+      function isValidSavedItinerary(plan) {
+        return plan.userId is string && plan.userId.size() <= 128 &&
+               plan.planTitle is string && plan.planTitle.size() <= 200 &&
+               plan.createdAt == request.time;
+      }
+    }
+
+    // --- Meta / Metadata ---
+    match /categories/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /tourTypes/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /locationMeta/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /globalAddOns/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /globalTransports/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /urgencyPoints/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /pages/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /guides/{guideId} {
+      allow read: if true;
+      allow create: if (isAdmin() || (isSupplier() && incoming().supplierId == request.auth.uid)) && isValidGuide(incoming());
+      allow update: if (isAdmin() || (isSupplier() && existing().supplierId == request.auth.uid && incoming().supplierId == existing().supplierId)) && isValidGuide(incoming());
+      allow delete: if isAdmin() || (isSupplier() && existing().supplierId == request.auth.uid);
+
+      function isValidGuide(guide) {
+        return guide.name is string && guide.name.size() > 0 && guide.name.size() <= 128 &&
+               guide.whatsapp is string && guide.whatsapp.size() > 0 && guide.whatsapp.size() <= 32;
+      }
+    }
+    match /communicationSettings/{id} { allow read: if true; allow write: if true; }
+    match /email_logs/{id} { allow read: if isAdmin(); allow write: if true; }
+
+    // --- Coupons ---
+    match /coupons/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- Posts (Blog) ---
+    match /posts/{postId} {
+      allow get: if (existing().status == 'published' || existing().status == 'active') || isAdmin();
+      allow list: if isAdmin() || (resource.data.status == 'published' || resource.data.status == 'active');
+      allow write: if isAdmin();
+    }
+
+    // --- AI FAQs ---
+    match /aiFaqs/{faqId} {
+      allow get: if isValidId(faqId);
+      allow list: if isAdmin() || (resource.data.isPublished == true);
+      allow create: if isAdmin() && isValidAIFAQ(incoming());
+      allow update: if (
+        isAdmin() && isValidAIFAQ(incoming())
+      ) || (
+        isValidAIFAQ(incoming()) && (
+          // Action: Increment views
+          (incoming().views == existing().views + 1 && incoming().diff(existing()).affectedKeys().hasOnly(['views'])) ||
+          // Action: Increment helpful count
+          (incoming().helpfulCount == existing().helpfulCount + 1 && incoming().diff(existing()).affectedKeys().hasOnly(['helpfulCount']))
+        )
+      );
+      allow delete: if isAdmin();
+
+      function isValidAIFAQ(faq) {
+        return faq.question is string && faq.question.size() > 0 && faq.question.size() <= 500 &&
+               faq.answer is string && faq.answer.size() > 0 && faq.answer.size() <= 10000 &&
+               faq.category is string && faq.category.size() > 0 && faq.category.size() <= 100 &&
+               faq.isPublished is bool &&
+               faq.views is number &&
+               faq.helpfulCount is number;
+      }
+    }
+
+    // --- AI Tips ---
+    match /aiTips/{tipId} {
+      allow get: if isValidId(tipId);
+      allow list: if isAdmin() || (resource.data.isPublished == true);
+      allow create, update: if isAdmin() && isValidAITip(incoming());
+      allow delete: if isAdmin();
+
+      function isValidAITip(tip) {
+        return tip.title is string && tip.title.size() > 0 && tip.title.size() <= 500 &&
+               tip.content is string && tip.content.size() > 0 && tip.content.size() <= 10000 &&
+               tip.category is string && tip.category.size() > 0 && tip.category.size() <= 100 &&
+               tip.isPublished is bool;
+      }
+    }
+
+    // --- Payouts ---
+    match /payouts/{payoutId} {
+      allow read: if (isAdmin() || (isSignedIn() && resource.data.supplierId == request.auth.uid)) && isValidId(payoutId);
+      allow create, update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // --- Inquiries ---
+    match /inquiries/{inquiryId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if true; // Publicly accessible to collect leads via AI Planner
+    }
+
+    // --- Inventory ---
+    match /inventory/{inventoryId} {
+      allow read: if true;
+      allow create: if true;
+      allow update: if true;
+      allow delete: if isAdmin();
+    }
+
+    // --- Support Tickets ---
+    match /supportTickets/{ticketId} {
+      allow get: if isValidId(ticketId) && (isAdmin() || (isSignedIn() && existing().userId == request.auth.uid));
+      allow list: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isValidId(ticketId) && isSignedIn() && incoming().userId == request.auth.uid && isValidSupportTicket(incoming()) && incoming().createdAt == request.time;
+      allow update: if isValidId(ticketId) && (isAdmin() || (
+        isSignedIn() && existing().userId == request.auth.uid &&
+        incoming().userId == existing().userId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['messages', 'status', 'updatedAt'])
+      )) && isValidSupportTicket(incoming());
+      allow delete: if isAdmin();
+
+      function isValidSupportTicket(ticket) {
+        return ticket.userId is string && ticket.userId.size() <= 128 &&
+               ticket.userName is string && ticket.userName.size() <= 256 &&
+               ticket.userEmail is string && ticket.userEmail.size() <= 256 &&
+               ticket.subject is string && ticket.subject.size() <= 500 &&
+               ticket.category is string && (ticket.category == 'Booking' || ticket.category == 'Tour Details' || ticket.category == 'Payment' || ticket.category == 'Feedback' || ticket.category == 'General Inquiry') &&
+               ticket.status is string && (ticket.status == 'open' || ticket.status == 'replied' || ticket.status == 'pending' || ticket.status == 'closed') &&
+               ticket.type is string && ticket.type == 'web' &&
+               ticket.messages is list && ticket.messages.size() <= 1000 &&
+               ticket.updatedAt == request.time;
+      }
+    }
+
+    // --- WhatsApp CRM Chats and Messages ---
+    match /whatsapp_chats/{chatId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /whatsapp_messages/{messageId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /analytics_pageviews/{docId} {
+      allow create: if true;
+      allow read, write: if isAdmin();
+    }
+
+    // --- Uploads (Stored files) ---
+    match /uploads/{uploadId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

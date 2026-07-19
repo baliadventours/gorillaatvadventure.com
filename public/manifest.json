@@ -1,0 +1,24 @@
+{
+  "name": "Bali Adventours Admin",
+  "short_name": "Bali Adventours",
+  "description": "Bali Adventours Admin Portal & Booking Management",
+  "start_url": "/admin",
+  "display": "standalone",
+  "background_color": "#00A651",
+  "theme_color": "#00A651",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://i.ibb.co.com/20xQH0xN/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://i.ibb.co.com/20xQH0xN/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

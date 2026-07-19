@@ -1,0 +1,150 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Oswald", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Instrument Serif", serif;
+
+  /* Map weights to the requested specific Poppins weights (200-800) */
+  --font-weight-thin: 200;
+  --font-weight-extralight: 200;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --font-weight-black: 900;
+  
+  --color-primary: var(--primary-color, #FF7A00);
+  --color-secondary: var(--secondary-color, #1F3B1F);
+}
+
+:root {
+  --primary-color: #FF7A00;
+  --secondary-color: #1F3B1F;
+  --font-body: "Poppins";
+  --font-heading: "Oswald";
+}
+
+@layer base {
+  html, body {
+    @apply w-full m-0 p-0;
+    max-width: 100%;
+    overflow-x: clip;
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply text-gray-900 bg-white antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+}
+
+.font-heading {
+  font-family: var(--font-heading), sans-serif;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@layer utilities {
+  @media print {
+    /* Hide specific global components */
+    nav, header, footer, .no-print, .actions-area {
+      display: none !important;
+    }
+
+    /* Reset layout for print */
+    body {
+      background: white !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .print-only {
+      display: block !important;
+    }
+
+    /* Force single page and clean margins */
+    @page {
+      size: A4 portrait;
+      margin: 10mm;
+    }
+
+    /* Adjust main container for printing */
+    .booking-success-page {
+      padding: 0 !important;
+      background: white !important;
+    }
+
+    .voucher-card {
+      box-shadow: none !important;
+      border: 1px solid #eee !important;
+      margin: 0 !important;
+      border-radius: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      display: block !important;
+    }
+
+    /* Prevent page breaks inside key elements */
+    .voucher-section {
+      page-break-inside: avoid;
+    }
+
+    /* Adjust layout to fit one page */
+    .lg\:grid-cols-\[1\.5fr_1fr\] {
+      grid-template-columns: 1fr !important;
+    }
+    
+    .p-12 {
+      padding: 2rem !important;
+    }
+  }
+}
+
+/* Custom typography overrides for improved mobile and desktop readability */
+.text-\[8px\] {
+  font-size: 10px !important;
+}
+
+.text-\[9px\] {
+  font-size: 11px !important;
+}
+
+.text-\[10px\] {
+  font-size: 12px !important;
+}
+
+.text-\[11px\] {
+  font-size: 13px !important;
+}
+
+/* Ensure micro-fonts inside inputs and labels are highly legible on desktop */
+@media (min-width: 768px) {
+  .text-\[10px\] {
+    font-size: 13px !important;
+  }
+  .text-\[11px\] {
+    font-size: 13.5px !important;
+  }
+}
+
+/* Prevent iOS Safari auto-zoom on input focusing for absolute layout stability */
+@media (max-width: 767px) {
+  input, select, textarea, [contenteditable] {
+    font-size: 16px !important;
+  }
+}
+

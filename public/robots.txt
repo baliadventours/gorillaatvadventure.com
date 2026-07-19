@@ -1,0 +1,23 @@
+# AI Crawler Optimization
+User-agent: *
+Allow: /
+Allow: /tour/
+Allow: /blog/
+Disallow: /admin/
+Disallow: /checkout/
+Disallow: /dashboard/
+
+# Specific AI Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://www.balidreamtrip.com/sitemap.xml

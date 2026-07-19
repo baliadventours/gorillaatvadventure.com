@@ -1,0 +1,486 @@
+{
+  "entities": {
+    "Tour": {
+      "title": "Tour",
+      "description": "Details of a travel tour",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "highlights": { "type": "array", "items": { "type": "string" } },
+        "inclusions": { "type": "array", "items": { "type": "string" } },
+        "exclusions": { "type": "array", "items": { "type": "string" } },
+        "itinerary": { 
+          "type": "array", 
+          "items": { 
+            "type": "object",
+            "properties": {
+              "day": { "type": "number" },
+              "title": { "type": "string" },
+              "description": { "type": "string" }
+            }
+          }
+        },
+        "importantInfo": { "type": "string" },
+        "languages": { "type": "array", "items": { "type": "string" } },
+        "location": { "type": "string" },
+        "locationMapUrl": { "type": "string" },
+        "duration": { "type": "string" },
+        "gallery": { "type": "array", "items": { "type": "string" } },
+        "regularPrice": { "type": "number" },
+        "discountPrice": { "type": "number" },
+        "packages": { 
+          "type": "array", 
+          "items": { 
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "inclusions": { "type": "array", "items": { "type": "string" } },
+              "exclusions": { "type": "array", "items": { "type": "string" } },
+              "tiers": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "minParticipants": { "type": "number" },
+                    "maxParticipants": { "type": "number" },
+                    "adultPrice": { "type": "number" },
+                    "childPrice": { "type": "number" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "faqs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question": { "type": "string" },
+              "answer": { "type": "string" }
+            }
+          }
+        },
+        "supplierId": { "type": "string" },
+        "supplierName": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "pending", "rejected"] },
+        "seo": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "keywords": { "type": "string" },
+            "ogImage": { "type": "string" }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "location", "duration", "regularPrice"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "User review for a tour",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "rating", "comment"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "Tour booking information",
+      "type": "object",
+      "properties": {
+        "tourId": { "type": "string" },
+        "userId": { "type": "string" },
+        "supplierId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "participants": {
+          "type": "object",
+          "properties": {
+            "adults": { "type": "number" },
+            "children": { "type": "number" }
+          }
+        },
+        "packageName": { "type": "string" },
+        "totalAmount": { "type": "number" },
+        "agentDiscount": { "type": "number" },
+        "merchantFee": { "type": "number" },
+        "supplierEarnings": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled", "review_required"] },
+        "paymentStatus": { "type": "string", "enum": ["pending", "paid", "failed"] },
+        "bookingSource": { "type": "string" },
+        "assignedGuideId": { "type": "string" },
+        "assignedGuideName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tourId", "userId", "date", "participants"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Application user profile",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "customer", "supplier", "agent"] },
+        "status": { "type": "string", "enum": ["active", "pending", "suspended"] },
+        "commissionRate": { "type": "number" },
+        "discountRate": { "type": "number" },
+        "companyName": { "type": "string" },
+        "taxId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    },
+    "UrgencyPoint": {
+      "title": "Urgency Point",
+      "description": "Trust features shown on tour pages",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "icon": { "type": "string" }
+      },
+      "required": ["title"]
+    },
+    "Page": {
+      "title": "Page",
+      "description": "Static content pages",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "content": { "type": "string" },
+        "seo": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "keywords": { "type": "string" },
+            "ogImage": { "type": "string" }
+          }
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "slug"]
+    },
+    "AddOn": {
+      "title": "Global Add-on",
+      "description": "Add-ons available for multiple tours",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "unit": { "type": "string" }
+      },
+      "required": ["name", "price"]
+    },
+    "Coupon": {
+      "title": "Coupon",
+      "description": "Discount codes",
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "discountType": { "type": "string", "enum": ["percentage", "fixed"] },
+        "discountValue": { "type": "number" },
+        "isActive": { "type": "boolean" },
+        "minBookingValue": { "type": "number" }
+      },
+      "required": ["code", "discountType", "discountValue", "isActive"]
+    },
+    "Guide": {
+      "title": "Guide",
+      "description": "Information about a tour guide or driver",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "supplierId": { "type": "string" },
+        "createdByAdmin": { "type": "boolean" }
+      },
+      "required": ["name", "whatsapp", "isActive"]
+    },
+    "BlogPost": {
+      "title": "Blog Post",
+      "description": "Information about a blog post",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "slug": { "type": "string" },
+        "content": { "type": "string" },
+        "excerpt": { "type": "string" },
+        "featuredImage": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "author": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "seo": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "keywords": { "type": "string" },
+            "ogImage": { "type": "string" }
+          }
+        },
+        "publishedAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "slug", "content", "status"]
+    },
+    "CommunicationSettings": {
+      "title": "Communication Settings",
+      "description": "Email provider and template settings",
+      "type": "object",
+      "properties": {
+        "emailProvider": { "type": "string", "enum": ["resend", "sendgrid", "smtp", "none"] },
+        "senderEmail": { "type": "string" },
+        "senderName": { "type": "string" },
+        "adminNotificationEmail": { "type": "string" },
+        "templates": { "type": "object" }
+      }
+    },
+    "SavedItinerary": {
+      "title": "Saved Itinerary",
+      "description": "AI generated itinerary saved by a user",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "planTitle": { "type": "string" },
+        "summary": { "type": "string" },
+        "itinerary": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "itinerary", "createdAt"]
+    },
+    "SupportTicket": {
+      "title": "Support Ticket",
+      "description": "Support tickets raised by customers",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "subject": { "type": "string" },
+        "category": { "type": "string", "enum": ["Booking", "Tour Details", "Payment", "Feedback", "General Inquiry"] },
+        "status": { "type": "string", "enum": ["open", "replied", "pending", "closed"] },
+        "messages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "senderId": { "type": "string" },
+              "senderName": { "type": "string" },
+              "senderRole": { "type": "string", "enum": ["customer", "admin"] },
+              "text": { "type": "string" },
+              "timestamp": { "type": "string", "format": "date-time" }
+            }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "type": { "type": "string", "enum": ["web"] }
+      },
+      "required": ["userId", "subject", "category", "status", "messages", "createdAt", "updatedAt"]
+    },
+    "AIFAQ": {
+      "title": "AI FAQ",
+      "description": "Bali semantic FAQ item managed by admin / generated by AI",
+      "type": "object",
+      "properties": {
+        "question": { "type": "string" },
+        "answer": { "type": "string" },
+        "category": { "type": "string" },
+        "isPublished": { "type": "boolean" },
+        "views": { "type": "number" },
+        "helpfulCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["question", "answer", "category"]
+    },
+    "AITip": {
+      "title": "AI Travel Tip",
+      "description": "Smart travel tip managed by admin / generated by AI",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "isPublished": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "category"]
+    },
+    "WhatsAppChat": {
+      "title": "WhatsApp Chat",
+      "description": "Cached WhatsApp conversation details for admin CRM tracking",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string" },
+        "name": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "session": { "type": "string" },
+        "lastMessage": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "body": { "type": "string" },
+            "fromMe": { "type": "boolean" },
+            "timestamp": { "type": "number" },
+            "direction": { "type": "string" },
+            "createdAt": { "type": "string", "format": "date-time" }
+          }
+        }
+      },
+      "required": ["chatId", "name", "updatedAt"]
+    },
+    "WhatsAppMessage": {
+      "title": "WhatsApp Message",
+      "description": "Cached individual WhatsApp message logs",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "chatId": { "type": "string" },
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "body": { "type": "string" },
+        "direction": { "type": "string" },
+        "fromMe": { "type": "boolean" },
+        "timestamp": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "session": { "type": "string" }
+      },
+      "required": ["id", "chatId", "from", "to", "body", "direction", "timestamp", "createdAt"]
+    },
+    "SimpleAnalyticsPageView": {
+      "title": "Simple Analytics Page View",
+      "description": "Logged page views for simplified client-side analytics",
+      "type": "object",
+      "properties": {
+        "path": { "type": "string" },
+        "referrer": { "type": "string" },
+        "userAgent": { "type": "string" },
+        "sessionId": { "type": "string" },
+        "keywords": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["path", "sessionId", "timestamp"]
+    }
+  },
+  "firestore": {
+    "analytics_pageviews": {
+      "schema": "SimpleAnalyticsPageView",
+      "description": "Logged simple website visitor page views"
+    },
+    "whatsapp_chats": {
+      "schema": "WhatsAppChat",
+      "description": "Cached WhatsApp chats metadata"
+    },
+    "whatsapp_messages": {
+      "schema": "WhatsAppMessage",
+      "description": "Cached WhatsApp message logs"
+    },
+    "saved_itineraries": {
+      "schema": "SavedItinerary",
+      "description": "Collection of itineraries saved by users"
+    },
+    "communicationSettings": {
+      "schema": "CommunicationSettings",
+      "description": "Global communication configuration"
+    },
+    "tours": {
+      "schema": "Tour",
+      "description": "Collection of all tours"
+    },
+    "tours/{tourId}/reviews": {
+      "schema": "Review",
+      "description": "Subcollection of reviews for a tour"
+    },
+    "reviews": {
+      "schema": "Review",
+      "description": "Top-level collection for all reviews"
+    },
+    "settings": {
+      "schema": "SiteSettings",
+      "description": "Global site configuration"
+    },
+    "popups": {
+      "schema": "Popup",
+      "description": "Marketing popups configuration"
+    },
+    "bookings": {
+      "schema": "Booking",
+      "description": "Collection of tour bookings"
+    },
+    "users": {
+      "schema": "User",
+      "description": "Collection of user profiles"
+    },
+    "urgencyPoints": {
+      "schema": "UrgencyPoint",
+      "description": "Trust highlights"
+    },
+    "pages": {
+      "schema": "Page",
+      "description": "Static pages"
+    },
+    "globalAddOns": {
+      "schema": "AddOn",
+      "description": "Reusable add-ons"
+    },
+    "coupons": {
+      "schema": "Coupon",
+      "description": "Discount coupons"
+    },
+    "categories": {
+      "schema": { "type": "object", "properties": { "name": { "type": "string" } } },
+      "description": "Tour categories"
+    },
+    "tourTypes": {
+      "schema": { "type": "object", "properties": { "name": { "type": "string" } } },
+      "description": "Tour types/modes"
+    },
+    "locationMeta": {
+      "schema": { "type": "object", "properties": { "name": { "type": "string" } } },
+      "description": "Generic locations"
+    },
+    "settings": {
+      "schema": { "type": "object" },
+      "description": "Global app settings"
+    },
+    "guides": {
+      "schema": "Guide",
+      "description": "Collection of tour guides/drivers"
+    },
+    "posts": {
+      "schema": "BlogPost",
+      "description": "Collection of blog posts"
+    },
+    "supportTickets": {
+      "schema": "SupportTicket",
+      "description": "Collection of customer support tickets"
+    },
+    "aiFaqs": {
+      "schema": "AIFAQ",
+      "description": "Collection of semantic Bali FAQs"
+    },
+    "aiTips": {
+      "schema": "AITip",
+      "description": "Collection of smart Bali travel tips"
+    }
+  }
+}
