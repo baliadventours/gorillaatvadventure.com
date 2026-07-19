@@ -24,13 +24,11 @@ export default function PriceList() {
     const fetchData = async () => {
       try {
         const [toursSnap, catsSnap] = await Promise.all([
-          getDocs(query(collection(db, 'tours'), where('status', '==', 'active'))),
+          getDocs(query(collection(db, 'tours'), where('status', '==', 'active'), orderBy('title', 'asc'))),
           getDocs(collection(db, 'categories'))
         ]);
 
-        const toursList = toursSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour));
-        toursList.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
-        setTours(toursList);
+        setTours(toursSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tour)));
         setCategories(catsSnap.docs.map(doc => ({ id: doc.id, name: doc.data().name })));
       } catch (error) {
         console.error('Error fetching data for price list:', error);

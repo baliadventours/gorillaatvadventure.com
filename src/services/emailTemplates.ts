@@ -194,8 +194,8 @@ export const emailBaseTemplate = (title: string, subtitle: string, content: stri
   // Resolve relative logo URL to an absolute URL for email clients
   if (logo && logo.startsWith('/')) {
     let appUrl = process.env.VITE_APP_URL || process.env.APP_URL || '';
-    if (!appUrl || appUrl.includes("baliadventours.com")) {
-      appUrl = "https://gorillaatvadventure.com"; // Default fallback / override
+    if (!appUrl) {
+      appUrl = "https://gorillaatvadventure.com"; // Default fallback
     }
     if (!appUrl.startsWith("http")) appUrl = "https://" + appUrl;
     appUrl = appUrl.replace(/\/$/, "");

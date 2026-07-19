@@ -464,17 +464,11 @@ export async function handleSendEmail(reqBody: any, authHeader?: string) {
             "{{supportPhone}}": config.supportPhone || "+6281246502939",
             "{{appUrl}}": (() => {
               let url = process.env.VITE_APP_URL || "https://gorillaatvadventure.com";
-              if (url.includes("baliadventours.com")) {
-                url = "https://gorillaatvadventure.com";
-              }
               if (!url.startsWith("http")) url = "https://" + url;
               return url.replace(/\/$/, "");
             })(),
             "{{viewBookingUrl}}": (() => {
               let url = process.env.VITE_APP_URL || "https://gorillaatvadventure.com";
-              if (url.includes("baliadventours.com")) {
-                url = "https://gorillaatvadventure.com";
-              }
               if (!url.startsWith("http")) url = "https://" + url;
               url = url.replace(/\/$/, "");
               return `${url}/booking-confirmation/${booking?.id || ''}`;

@@ -155,40 +155,28 @@ export async function generateManifestPdf(booking: any, config: any): Promise<Bu
   doc.setFont('helvetica', 'bold');
   doc.text('OPERATIONAL INFORMATION', margin, currentY - 10);
 
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(241, 245, 249);
+  doc.rect(margin, currentY - 2, contentWidth, 20, 'FD');
+
   const rawAddress = booking.customerData?.pickupAddress || "";
   const isMeetingPoint = !rawAddress || 
     rawAddress.includes("Meet") || 
     rawAddress.toLowerCase().includes("basecamp") ||
-    rawAddress.toLowerCase().includes("operation") ||
-    rawAddress.toLowerCase().includes("own transport") ||
-    rawAddress.toLowerCase().includes("meet on location") ||
-    rawAddress.includes("maps.app.goo.gl") ||
-    rawAddress.includes("google.com/maps");
+    rawAddress.toLowerCase().includes("operation");
 
   let addressToPrint = rawAddress;
   let linkUrl = undefined;
   if (isMeetingPoint) {
     const mp = parseMeetingPoint(rawAddress);
-    addressToPrint = `${mp.venue}\nGoogle Maps Link:\n${mp.url}`;
+    addressToPrint = mp.venue;
     linkUrl = mp.url;
   }
 
-  // Calculate dynamic box height based on column text size
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  const leftLines = doc.splitTextToSize(addressToPrint || 'Meet at location', colWidth + 20);
-  const rightLines = doc.splitTextToSize(booking.assignedGuideName || 'TBA', colWidth - 20);
-  const maxTextHeight = Math.max(leftLines.length * 5, rightLines.length * 5);
-  const boxHeight = maxTextHeight + 12;
+  drawInfoBox(isMeetingPoint ? 'MEETING POINT LOCATION' : 'PICKUP ADDRESS / HOTEL NAME', addressToPrint || 'Meet at location', margin + 5, currentY + 4, colWidth + 20, linkUrl);
+  drawInfoBox('ASSIGNED GUIDE', booking.assignedGuideName || 'TBA', margin + colWidth + 30, currentY + 4, colWidth - 20);
 
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(241, 245, 249);
-  doc.rect(margin, currentY - 2, contentWidth, boxHeight, 'FD');
-
-  drawInfoBox(isMeetingPoint ? 'MEETING POINT LOCATION' : 'PICKUP ADDRESS / HOTEL NAME', addressToPrint || 'Meet at location', margin + 5, currentY + 3, colWidth + 20, linkUrl);
-  drawInfoBox('ASSIGNED GUIDE', booking.assignedGuideName || 'TBA', margin + colWidth + 30, currentY + 3, colWidth - 20);
-
-  currentY += boxHeight + 8;
+  currentY += 30;
 
   // --- SECTION: BOOKED ADD-ONS & SPECIAL REQUIREMENTS ---
   const midPoint = margin + (contentWidth / 2) + 5;

@@ -74,24 +74,13 @@ export default function PayoutManager({ currentUserProfile }: PayoutManagerProps
     });
 
     // 2. Fetch payout history
-    let payoutQ = query(collection(db, 'payouts'));
+    let payoutQ = query(collection(db, 'payouts'), orderBy('createdAt', 'desc'));
     if (isSupplier) {
-      payoutQ = query(collection(db, 'payouts'), where('supplierId', '==', currentUserProfile.uid));
+      payoutQ = query(collection(db, 'payouts'), where('supplierId', '==', currentUserProfile.uid), orderBy('createdAt', 'desc'));
     }
 
     const unsubscribePayouts = onSnapshot(payoutQ, (snapshot) => {
       const history = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Payout[];
-      history.sort((a: any, b: any) => {
-        const getTimestampMillis = (val: any): number => {
-          if (!val) return 0;
-          if (typeof val.toMillis === "function") return val.toMillis();
-          if (typeof val.seconds === "number") return val.seconds * 1000;
-          if (val instanceof Date) return val.getTime();
-          if (typeof val === "string" || typeof val === "number") return new Date(val).getTime() || 0;
-          return 0;
-        };
-        return getTimestampMillis(b.createdAt) - getTimestampMillis(a.createdAt);
-      });
       setPayoutHistory(history);
     });
 

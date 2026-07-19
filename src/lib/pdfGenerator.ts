@@ -150,39 +150,27 @@ export async function generateTourVoucherPdf(booking: any, config: any) {
   doc.text('PICKUP & ARRIVAL INFO', margin, currentY);
 
   currentY += 8;
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(241, 245, 249);
+  doc.rect(margin, currentY, contentWidth, 20, 'FD');
   
   const rawAddress = booking.customerData.pickupAddress || "";
   const isMeetingPoint = !rawAddress || 
     rawAddress.includes("Meet") || 
     rawAddress.toLowerCase().includes("basecamp") ||
-    rawAddress.toLowerCase().includes("operation") ||
-    rawAddress.toLowerCase().includes("own transport") ||
-    rawAddress.toLowerCase().includes("meet on location") ||
-    rawAddress.includes("maps.app.goo.gl") ||
-    rawAddress.includes("google.com/maps");
+    rawAddress.toLowerCase().includes("operation");
 
   let addressToPrint = rawAddress;
   let linkUrl = undefined;
   if (isMeetingPoint) {
     const mp = parseMeetingPoint(rawAddress);
-    addressToPrint = `${mp.venue}\nGoogle Maps Link:\n${mp.url}`;
+    addressToPrint = mp.venue;
     linkUrl = mp.url;
   }
   
-  // Calculate dynamic box height based on wrapping text to prevent overlapping
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  const tempLines = doc.splitTextToSize(addressToPrint || 'Please contact for pickup location', contentWidth - 10);
-  const textHeight = tempLines.length * 5;
-  const boxHeight = textHeight + 15; // padding for labels and spacing
-
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(241, 245, 249);
-  doc.rect(margin, currentY, contentWidth, boxHeight, 'FD');
-  
   drawInfoBox(isMeetingPoint ? 'MEETING POINT LOCATION' : 'LOCATION / HOTEL NAME', addressToPrint || 'Please contact for pickup location', margin + 5, currentY + 8, contentWidth - 10, linkUrl);
 
-  currentY += boxHeight + 10;
+  currentY += 30;
 
   // Bottom Grid for Addons & Special Req
   const midPoint = margin + (contentWidth / 2) + 5;

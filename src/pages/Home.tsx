@@ -294,7 +294,7 @@ const DEFAULT_FALLBACK_POSTS: BlogPost[] = [
 
 const SLIDES = [
   {
-    image: "https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&w=2070&auto=format&fit=crop",
+    image: "https://i.ibb.co.com/gbHvLmVx/IMG-3050-optimized.webp",
     subtitle: "WELCOME TO GORILLA ATV ADVENTURE UBUD",
     title: "Where Adrenaline Meets Natural Beauty",
     description: "Experience an unforgettable off-road journey through lush jungles, scenic rice fields, muddy trails, rivers, and exciting jungle tracks designed for riders of all skill levels.",
@@ -637,9 +637,6 @@ export default function Home() {
                     alt={slidesToUse[currentSlide]?.title}
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      e.currentTarget.src = "https://images.unsplash.com/photo-1551524559-8af4e6624178?q=80&w=2070&auto=format&fit=crop";
-                    }}
                   />
                 </motion.div>
               </AnimatePresence>

@@ -89,38 +89,19 @@ export default function Header() {
     // Listen for recent bookings to show as notifications
     const q = query(
       collection(db, 'bookings'),
-      where('userId', '==', user.uid)
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc'),
+      limit(5)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const allBookings = snapshot.docs.map(doc => {
+      const bookingNotifications = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
-          ...data
-        };
-      });
-
-      // Sort client-side by createdAt descending to avoid missing composite index errors
-      allBookings.sort((a: any, b: any) => {
-        const getTimestampMillis = (val: any): number => {
-          if (!val) return 0;
-          if (typeof val.toMillis === "function") return val.toMillis();
-          if (typeof val.seconds === "number") return val.seconds * 1000;
-          if (val instanceof Date) return val.getTime();
-          if (typeof val === "string" || typeof val === "number") return new Date(val).getTime() || 0;
-          return 0;
-        };
-        return getTimestampMillis(b.createdAt) - getTimestampMillis(a.createdAt);
-      });
-
-      const bookingNotifications = allBookings.slice(0, 5).map((data: any) => {
-        const status = data.status || 'pending';
-        return {
-          id: data.id,
           type: 'booking',
-          title: `Booking ${status.charAt(0).toUpperCase() + status.slice(1)}`,
-          message: `Your booking for ${data.tourTitle || 'Adventure Tour'} is now ${status}.`,
+          title: `Booking ${data.status.charAt(0).toUpperCase() + data.status.slice(1)}`,
+          message: `Your booking for ${data.tourTitle} is now ${data.status}.`,
           time: data.createdAt,
           tourId: data.tourId
         };
@@ -136,8 +117,6 @@ export default function Header() {
       };
 
       setNotifications([welcome, ...bookingNotifications]);
-    }, (error) => {
-      console.warn("Notifications snapshot error:", error);
     });
 
     return unsubscribe;
